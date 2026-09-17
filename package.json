@@ -8,6 +8,7 @@
   },
   "scripts": {
     "scan": "node src/scan.ts",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src && oxfmt --check src",
     "format": "oxfmt --write src"
@@ -24,6 +25,7 @@
     "@types/node": "26.5.1",
     "oxfmt": "0.67.0",
     "oxlint": "1.82.0",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
   }
 }
