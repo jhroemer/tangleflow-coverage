@@ -4,9 +4,14 @@ import { discoverRepos, type Repo } from './discover.ts';
 import { getBlob, listWorkflowFiles } from './tangled.ts';
 
 /**
- * The conversion outcome of one workflow file.
+ * The conversion outcome of one workflow file. `owner` is the handle of the
+ * account that owns the repo.
  */
-export type Result = { repo: string; file: string } & Conversion;
+export type Result = {
+  owner: string;
+  repo: string;
+  file: string;
+} & Conversion;
 
 const DEFAULT_LIMIT = 50;
 
@@ -19,7 +24,7 @@ export async function scanRepo(repo: Repo): Promise<Result[]> {
     files.map(async (file) => {
       const conversion = convertWorkflow(await getBlob(repo.repoDid, file));
       return Object.assign(
-        { repo: `${repo.handle}/${repo.name}`, file },
+        { owner: repo.handle, repo: `${repo.handle}/${repo.name}`, file },
         conversion,
       );
     }),
