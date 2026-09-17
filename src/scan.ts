@@ -1,43 +1,22 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { convertWorkflow, type Conversion } from './convert.ts';
-import { getBlob, listFiles } from './tangled.ts';
-
-/**
- * A repo as discovered from its `sh.tangled.repo` record.
- */
-export type Repo = {
-  ownerDid: string;
-  handle: string;
-  name: string;
-  repoDid: string;
-  knot: string;
-};
+import { discoverRepos, type Repo } from './discover.ts';
+import { getBlob, listWorkflowFiles } from './tangled.ts';
 
 /**
  * The conversion outcome of one workflow file.
  */
 export type Result = { repo: string; file: string } & Conversion;
 
-const WORKFLOWS_DIR = '.github/workflows';
-const YAML_EXTENSIONS = ['.yml', '.yaml'] as const;
+const DEFAULT_LIMIT = 50;
 
 /**
- * Convert every GitHub workflow in `repo`. A repo that already has a
- * `.tangled` folder is out of scope and yields no results.
+ * Convert every GitHub workflow in `repo`.
  */
 export async function scanRepo(repo: Repo): Promise<Result[]> {
-  const hasTangled = (await listFiles(repo.repoDid, '.tangled')).length > 0;
-  if (hasTangled) {
-    return [];
-  }
-
-  const names = (await listFiles(repo.repoDid, WORKFLOWS_DIR)).filter((name) =>
-    YAML_EXTENSIONS.some((ext) => name.endsWith(ext)),
-  );
-
+  const files = await listWorkflowFiles(repo.repoDid);
   return Promise.all(
-    names.map(async (name) => {
-      const file = `${WORKFLOWS_DIR}/${name}`;
+    files.map(async (file) => {
       const conversion = convertWorkflow(await getBlob(repo.repoDid, file));
       return Object.assign(
         { repo: `${repo.handle}/${repo.name}`, file },
@@ -48,17 +27,29 @@ export async function scanRepo(repo: Repo): Promise<Result[]> {
 }
 
 async function main(): Promise<void> {
-  const repo = JSON.parse(
-    await readFile('fixtures/sample-repo.json', 'utf8'),
-  ) as Repo;
-  const results = await scanRepo(repo);
+  const arg = process.argv[2];
+  const limit = arg === undefined ? DEFAULT_LIMIT : Number(arg);
+  const repos = await discoverRepos(limit);
 
   await mkdir('out', { recursive: true });
+  await writeFile('out/repos.json', JSON.stringify(repos, null, 2) + '\n');
+
+  const results: Result[] = [];
+  let skipped = 0;
+  for (const repo of repos) {
+    try {
+      results.push(...(await scanRepo(repo)));
+    } catch (err) {
+      skipped++;
+      console.warn(`skipping ${repo.handle}/${repo.name}: ${String(err)}`);
+    }
+  }
   await writeFile('out/results.json', JSON.stringify(results, null, 2) + '\n');
 
   const failed = results.filter((r) => !r.ok).length;
   console.log(
-    `${results.length} workflow files, ${failed} failed → out/results.json`,
+    `${repos.length} repos → out/repos.json, ${skipped} skipped; ` +
+      `${results.length} workflow files, ${failed} failed → out/results.json`,
   );
 }
 

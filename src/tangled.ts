@@ -5,6 +5,8 @@
  * `knot1.tangled.sh` 404s on every `sh.tangled.git.temp.*` call.
  */
 
+import type { $output as TreeOutput } from '@atcute/tangled/types/git/temp/getTree';
+
 const MIRROR = 'https://mirror-fsn.tangled.network';
 const REF = 'HEAD';
 const USER_AGENT = 'tangled-migration-scanner';
@@ -40,8 +42,8 @@ export async function listFiles(
   if (!res.ok) {
     throw new Error(`getTree ${repoDid} ${path}: ${res.status}`);
   }
-  const body = (await res.json()) as { files?: { name: string }[] };
-  return (body.files ?? []).map((entry) => entry.name);
+  const body = (await res.json()) as TreeOutput;
+  return body.files.map((entry) => entry.name);
 }
 
 /**
@@ -53,4 +55,18 @@ export async function getBlob(repoDid: string, path: string): Promise<string> {
     throw new Error(`getBlob ${repoDid} ${path}: ${res.status}`);
   }
   return res.text();
+}
+
+const WORKFLOWS_DIR = '.github/workflows';
+const YAML_EXTENSIONS = ['.yml', '.yaml'] as const;
+
+/**
+ * List the GitHub workflow files at the repo's default branch as
+ * repo-relative paths (`.github/workflows/<name>.yml|.yaml`).
+ */
+export async function listWorkflowFiles(repoDid: string): Promise<string[]> {
+  const names = await listFiles(repoDid, WORKFLOWS_DIR);
+  return names
+    .filter((name) => YAML_EXTENSIONS.some((ext) => name.endsWith(ext)))
+    .map((name) => `${WORKFLOWS_DIR}/${name}`);
 }
