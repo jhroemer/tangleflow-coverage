@@ -1,11 +1,11 @@
 import { normalizeError } from './normalize-error.ts';
-import type { Result } from './scan.ts';
+import type { Result, Scan } from './scan.ts';
 
 /**
  * One normalized error: how many distinct repos and owners it blocks, and how
  * many workflow files raise it.
  */
-export type Blocker = {
+type Blocker = {
   error: string;
   repos: number;
   owners: number;
@@ -15,7 +15,7 @@ export type Blocker = {
 /**
  * A repo with at least one workflow that converts cleanly.
  */
-export type ConvertibleRepo = {
+type ConvertibleRepo = {
   repo: string;
   converting: string[];
   workflows: number;
@@ -70,9 +70,8 @@ export function rankBlockers(results: Result[]): Blocker[] {
 }
 
 /**
- * Group the cleanly converting workflows by repo. Repos where every file
- * converts sort first, then by share converted, then by count. Repos without
- * a converting file are left out.
+ * Group the cleanly converting workflows by repo, most workflows first. Repos
+ * without a converting file are left out.
  */
 export function groupConvertible(results: Result[]): ConvertibleRepo[] {
   const byRepo = new Map<string, ConvertibleRepo>();
@@ -90,10 +89,62 @@ export function groupConvertible(results: Result[]): ConvertibleRepo[] {
   }
   return [...byRepo.values()]
     .filter((entry) => entry.converting.length > 0)
-    .sort(
-      (a, b) =>
-        b.converting.length / b.workflows - a.converting.length / a.workflows ||
-        b.converting.length - a.converting.length ||
-        compare(a.repo, b.repo),
-    );
+    .sort((a, b) => b.workflows - a.workflows || compare(a.repo, b.repo));
+}
+
+/**
+ * Error types hitting fewer repos than this are left out of the report.
+ */
+const MIN_REPOS = 10;
+
+/**
+ * A table cell holding an error message. Pipes would end the cell.
+ */
+function cell(error: string): string {
+  return '`' + error.replaceAll('|', '\\|') + '`';
+}
+
+/**
+ * Render a scan as a markdown report: a summary, the error types hitting
+ * `MIN_REPOS` or more repos, and the repos where every workflow converts.
+ */
+export function renderReport(scan: Scan): string {
+  const { results } = scan;
+  const repos = new Set(results.map((result) => result.repo)).size;
+  const owners = new Set(results.map((result) => result.owner)).size;
+  const converting = results.filter((result) => result.ok).length;
+  const share = Math.round((100 * converting) / results.length);
+  const blockers = rankBlockers(results);
+  const shown = blockers.filter((blocker) => blocker.repos >= MIN_REPOS);
+  const convertible = groupConvertible(results);
+  const full = convertible.filter(
+    (entry) => entry.converting.length === entry.workflows,
+  );
+  return [
+    `# tangleflow coverage ${scan.date}`,
+    '',
+    `tangleflow ${scan.tangleflow}. ${results.length} workflow files in ` +
+      `${repos} repos from ${owners} owners.`,
+    `${converting} files convert (${share}%). ${convertible.length} repos ` +
+      `have a converting workflow, ${full.length} convert every workflow.`,
+    '',
+    `## Errors hitting ${MIN_REPOS} or more repos`,
+    '',
+    `${shown.length} of ${blockers.length} error types.`,
+    '',
+    '| error | repos | owners | files |',
+    '| --- | ---: | ---: | ---: |',
+    ...shown.map(
+      (b) => `| ${cell(b.error)} | ${b.repos} | ${b.owners} | ${b.files} |`,
+    ),
+    '',
+    '## Repos where every workflow converts',
+    '',
+    ...full.map(
+      (entry) =>
+        `- [${entry.repo}](https://tangled.org/${entry.repo}), ` +
+        `${entry.workflows} workflow${entry.workflows === 1 ? '' : 's'}`,
+    ),
+    '',
+  ].join('\n');
 }

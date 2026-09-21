@@ -157,55 +157,41 @@ describe('groupConvertible', () => {
     ]);
   });
 
-  it('sorts fully converting repos first, then by share', () => {
+  it('sorts by workflow count, then by name', () => {
     const results: Result[] = [
       {
         owner: 'a.org',
-        repo: 'a.org/half',
+        repo: 'a.org/two',
         file: 'ci.yml',
         ok: true,
         error: null,
       },
       {
         owner: 'a.org',
-        repo: 'a.org/half',
-        file: 'release.yml',
-        ok: false,
-        error: 'A',
-      },
-      {
-        owner: 'a.org',
-        repo: 'a.org/full',
-        file: 'ci.yml',
-        ok: true,
-        error: null,
-      },
-      {
-        owner: 'a.org',
-        repo: 'a.org/most',
-        file: 'ci.yml',
-        ok: true,
-        error: null,
-      },
-      {
-        owner: 'a.org',
-        repo: 'a.org/most',
+        repo: 'a.org/two',
         file: 'lint.yml',
         ok: true,
         error: null,
       },
       {
         owner: 'a.org',
-        repo: 'a.org/most',
-        file: 'release.yml',
-        ok: false,
-        error: 'A',
+        repo: 'a.org/one-b',
+        file: 'ci.yml',
+        ok: true,
+        error: null,
+      },
+      {
+        owner: 'a.org',
+        repo: 'a.org/one-a',
+        file: 'ci.yml',
+        ok: true,
+        error: null,
       },
     ];
     expect(groupConvertible(results).map((c) => c.repo)).toEqual([
-      'a.org/full',
-      'a.org/most',
-      'a.org/half',
+      'a.org/two',
+      'a.org/one-a',
+      'a.org/one-b',
     ]);
   });
 
