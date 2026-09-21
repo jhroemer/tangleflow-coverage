@@ -6,29 +6,26 @@
  * Repos on self-hosted knots are out of scope.
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
 import { DidResolver, getHandle, MemoryCache } from '@atproto/identity';
+import { parseCanonicalResourceUri } from '@atcute/lexicons';
 import type { Main as RepoRecord } from '@atcute/tangled/types/repo';
 import type { $output as GetRepoOutput } from '@atcute/tangled/types/repo/getRepoByRepoDid';
 import type { $output as ListReposOutput } from '@atcute/tangled/types/sync/listRepos';
-import { listFiles, listWorkflowFiles } from './tangled.ts';
+import { listFiles, listWorkflowFiles, USER_AGENT } from './tangled.ts';
 
 /**
  * A candidate repo, named from its `sh.tangled.repo` record.
  */
 export type Repo = {
-  ownerDid: string;
   handle: string;
   name: string;
   repoDid: string;
-  knot: string;
 };
 
 const KNOT = 'https://knot1.tangled.sh';
 const APPVIEW = 'https://api.tangled.org';
 const PAGE_SIZE = 1000;
 const PROGRESS_EVERY = 200;
-const USER_AGENT = 'tangled-migration-scanner';
 
 const resolver = new DidResolver({ didCache: new MemoryCache() });
 
@@ -84,21 +81,13 @@ async function describeRepo(repoDid: string): Promise<Repo | null> {
   }
   const { uri, value } = (await res.json()) as GetRepoOutput;
   const record = value as RepoRecord;
-  const [ownerDid, , rkey] = uri.slice('at://'.length).split('/');
-  const doc = ownerDid
-    ? await resolver.resolve(ownerDid).catch(() => null)
-    : null;
+  const { repo: ownerDid, rkey } = parseCanonicalResourceUri(uri);
+  const doc = await resolver.resolve(ownerDid).catch(() => null);
   const handle = doc ? getHandle(doc) : undefined;
-  if (!ownerDid || !rkey || !handle) {
+  if (!handle) {
     return null;
   }
-  return {
-    ownerDid,
-    handle,
-    name: record.name ?? rkey,
-    repoDid,
-    knot: record.knot,
-  };
+  return { handle, name: record.name ?? rkey, repoDid };
 }
 
 /**
@@ -146,15 +135,4 @@ export async function discoverRepos(): Promise<Repo[]> {
       `${repos.length} candidates`,
   );
   return repos;
-}
-
-async function main(): Promise<void> {
-  const repos = await discoverRepos();
-  await mkdir('out', { recursive: true });
-  await writeFile('out/repos.json', JSON.stringify(repos, null, 2) + '\n');
-  console.log(`${repos.length} repos → out/repos.json`);
-}
-
-if (import.meta.main) {
-  main();
 }

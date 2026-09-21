@@ -7,21 +7,19 @@
     "node": ">=26"
   },
   "scripts": {
-    "discover": "node src/discover.ts",
-    "scan": "node src/scan.ts",
-    "report": "node src/report.ts",
+    "start": "node src/main.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src && oxfmt --check src",
     "format": "oxfmt --write src"
   },
   "dependencies": {
+    "@atcute/lexicons": "2.1.0",
     "@atproto/identity": "0.5.13",
     "tangleflow": "0.7.1",
     "yaml": "2.9.1"
   },
   "devDependencies": {
-    "@atcute/lexicons": "2.1.0",
     "@atcute/tangled": "2.0.19",
     "@types/node": "26.5.1",
     "oxfmt": "0.67.0",

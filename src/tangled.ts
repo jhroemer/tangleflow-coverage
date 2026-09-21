@@ -9,7 +9,7 @@ import type { $output as TreeOutput } from '@atcute/tangled/types/git/temp/getTr
 
 const MIRROR = 'https://mirror-fsn.tangled.network';
 const REF = 'HEAD';
-const USER_AGENT = 'tangled-migration-scanner';
+export const USER_AGENT = 'tangled-migration-scanner';
 
 /**
  * Call one `sh.tangled.git.temp.*` method on the mirror.

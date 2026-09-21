@@ -1,6 +1,5 @@
-import { writeFile } from 'node:fs/promises';
 import { normalizeError } from './normalize-error.ts';
-import { latestScanPath, readScan, type Result } from './scan.ts';
+import type { Result } from './scan.ts';
 
 /**
  * One normalized error: how many distinct repos and owners it blocks, and how
@@ -21,11 +20,6 @@ export type ConvertibleRepo = {
   converting: string[];
   workflows: number;
 };
-
-/**
- * Blockers ranked by impact, and the repos with converting workflows.
- */
-export type Report = { blockers: Blocker[]; convertible: ConvertibleRepo[] };
 
 /**
  * Plain string order, so the ranking is the same on every machine.
@@ -102,34 +96,4 @@ export function groupConvertible(results: Result[]): ConvertibleRepo[] {
         b.converting.length - a.converting.length ||
         compare(a.repo, b.repo),
     );
-}
-
-async function main(): Promise<void> {
-  const path = process.argv[2] ?? (await latestScanPath());
-  const { results } = await readScan(path);
-  const report: Report = {
-    blockers: rankBlockers(results),
-    convertible: groupConvertible(results),
-  };
-  await writeFile('out/report.json', JSON.stringify(report, null, 2) + '\n');
-
-  console.table(report.blockers);
-  console.table(
-    report.convertible.map((entry) => ({
-      repo: entry.repo,
-      'converts cleanly': `${entry.converting.length}/${entry.workflows}`,
-    })),
-  );
-  const repos = new Set(results.map((result) => result.repo));
-  const owners = new Set(results.map((result) => result.owner));
-  console.log(
-    `${results.length} workflow files in ${repos.size} repos from ` +
-      `${owners.size} owners (${path}); ${report.blockers.length} blockers, ` +
-      `${report.convertible.length} repos with a cleanly converting file ` +
-      `→ out/report.json`,
-  );
-}
-
-if (import.meta.main) {
-  main();
 }
