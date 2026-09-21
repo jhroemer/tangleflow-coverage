@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { findPackageJSON } from 'node:module';
 import { convertWorkflowToTangled } from 'tangleflow';
 import { parse } from 'yaml';
 
@@ -20,4 +22,16 @@ export function convertWorkflow(yamlText: string): Conversion {
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+/**
+ * The version of the tangleflow package that `convertWorkflow` runs.
+ */
+export async function tangleflowVersion(): Promise<string> {
+  const path = findPackageJSON('tangleflow', import.meta.url);
+  if (!path) {
+    throw new Error('tangleflow package.json not found');
+  }
+  const pkg = JSON.parse(await readFile(path, 'utf8')) as { version: string };
+  return pkg.version;
 }

@@ -1,6 +1,6 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { normalizeError } from './normalize-error.ts';
-import type { Result } from './scan.ts';
+import { latestScanPath, readScan, type Result } from './scan.ts';
 
 /**
  * One normalized error: how many distinct repos and owners it blocks, and how
@@ -105,9 +105,8 @@ export function groupConvertible(results: Result[]): ConvertibleRepo[] {
 }
 
 async function main(): Promise<void> {
-  const results = JSON.parse(
-    await readFile('out/results.json', 'utf8'),
-  ) as Result[];
+  const path = process.argv[2] ?? (await latestScanPath());
+  const { results } = await readScan(path);
   const report: Report = {
     blockers: rankBlockers(results),
     convertible: groupConvertible(results),
@@ -125,7 +124,7 @@ async function main(): Promise<void> {
   const owners = new Set(results.map((result) => result.owner));
   console.log(
     `${results.length} workflow files in ${repos.size} repos from ` +
-      `${owners.size} owners; ${report.blockers.length} blockers, ` +
+      `${owners.size} owners (${path}); ${report.blockers.length} blockers, ` +
       `${report.convertible.length} repos with a cleanly converting file ` +
       `→ out/report.json`,
   );
