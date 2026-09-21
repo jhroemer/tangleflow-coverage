@@ -1,4 +1,4 @@
-# tangled migration scanner
+# tangleflow-coverage
 
 ## Running
 

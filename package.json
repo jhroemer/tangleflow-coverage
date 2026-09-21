@@ -1,5 +1,5 @@
 {
-  "name": "tangled-migration-scanner",
+  "name": "tangleflow-coverage",
   "version": "0.1.0",
   "private": true,
   "type": "module",
