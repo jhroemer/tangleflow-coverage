@@ -1,0 +1,19 @@
+when:
+  - event: ["push", "pull_request"]
+    branch: main
+
+engine: nixery
+
+dependencies:
+  nixpkgs:
+    - nodejs_24
+
+steps:
+  - name: install dependencies
+    command: npm ci --ignore-scripts
+  - name: typecheck
+    command: npm run typecheck
+  - name: lint
+    command: npm run lint
+  - name: test
+    command: npm run test
