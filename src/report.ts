@@ -1,9 +1,8 @@
-import { normalizeError } from './normalize-error.ts';
+import { stripErrorDetails } from './strip-error-details.ts';
 import type { Result, Scan } from './scan.ts';
 
 /**
- * One normalized error: how many distinct repos and owners it blocks, and how
- * many workflow files raise it.
+ * One error type, number of distinct repos and owners it blocks, how many workflow files raise it.
  */
 type Blocker = {
   error: string;
@@ -29,7 +28,7 @@ function compare(a: string, b: string): number {
 }
 
 /**
- * Group failed results by normalized error, ranked by distinct repos, then
+ * Group failed results by error with details stripped, ranked by distinct repos, then
  * distinct owners, then files. A repo hitting one error in many files counts
  * once, so ten repos hitting it once outrank it.
  */
@@ -42,7 +41,7 @@ export function rankBlockers(results: Result[]): Blocker[] {
     if (result.ok) {
       continue;
     }
-    const error = normalizeError(result.error);
+    const error = stripErrorDetails(result.error);
     const group = groups.get(error) ?? {
       repos: new Set(),
       owners: new Set(),

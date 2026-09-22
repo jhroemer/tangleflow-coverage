@@ -80,7 +80,7 @@ describe('rankBlockers', () => {
     ]);
   });
 
-  it('groups by the normalized error', () => {
+  it('groups by the error with details stripped', () => {
     const results: Result[] = [
       {
         owner: 'a.org',
@@ -101,11 +101,16 @@ describe('rankBlockers', () => {
         repo: 'b.org/one',
         file: 'y.yml',
         ok: false,
-        error: 'Unsupported key "strategy" in workflow',
+        error: 'Unsupported key "strategy" in job "test"',
       },
     ];
     expect(rankBlockers(results)).toEqual([
-      { error: 'Unsupported key "strategy"', repos: 2, owners: 2, files: 3 },
+      {
+        error: 'Unsupported key "strategy" in job',
+        repos: 2,
+        owners: 2,
+        files: 3,
+      },
     ]);
   });
 
