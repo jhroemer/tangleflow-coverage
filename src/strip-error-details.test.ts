@@ -7,9 +7,9 @@ describe('stripErrorDetails', () => {
     expect(stripErrorDetails('Unsupported key "strategy" in job "test"')).toBe(
       expected,
     );
-    expect(stripErrorDetails('Unsupported key "strategy" in job "analyze"')).toBe(
-      expected,
-    );
+    expect(
+      stripErrorDetails('Unsupported key "strategy" in job "analyze"'),
+    ).toBe(expected);
   });
 
   it('keeps a key apart per level', () => {
