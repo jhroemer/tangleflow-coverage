@@ -8,12 +8,9 @@ import { scanRepos, type Scan } from './scan.ts';
 
 const SCANS_DIR = 'scans';
 const REPORTS_DIR = 'reports';
-const USAGE = `Usage: npm run scan
-       npm run report [-- <scan.json>]
-
-scan    discover repos on knot1, run tangleflow on their workflows, and write
-        ${SCANS_DIR}/<date>.json
-report  render a scan as ${REPORTS_DIR}/<date>.md; defaults to the newest scan
+const USAGE = `Usage: 
+npm run scan
+npm run report [-- <scan.json>]
 `;
 
 async function scan(): Promise<void> {
