@@ -1,10 +1,3 @@
-/**
- * Read-only access to git contents of Tangled repos.
- *
- * Reads go through the mirror rather than the knot named in a repo record;
- * `knot1.tangled.sh` 404s on every `sh.tangled.git.temp.*` call.
- */
-
 import type { $output as TreeOutput } from '@atcute/tangled/types/git/temp/getTree';
 
 const MIRROR = 'https://mirror-fsn.tangled.network';
@@ -24,14 +17,10 @@ function xrpc(
 }
 
 /**
- * List the entry names in `path` at the repo's default branch. A missing path
- * yields an empty list.
- *
- * Knot1 repos answer 404 for a missing path, but self-hosted knots answer 200
- * with an empty list for any path, so the empty list is the only reliable
- * "absent" signal.
+ * List the entry names in `path` at the repo's default branch. The mirror
+ * answers 404 for a missing path, which yields an empty list.
  */
-export async function listFiles(
+export async function listRepoFiles(
   repoDid: string,
   path: string,
 ): Promise<string[]> {
@@ -64,8 +53,10 @@ const YAML_EXTENSIONS = ['.yml', '.yaml'] as const;
  * List the GitHub workflow files at the repo's default branch as
  * repo-relative paths (`.github/workflows/<name>.yml|.yaml`).
  */
-export async function listWorkflowFiles(repoDid: string): Promise<string[]> {
-  const names = await listFiles(repoDid, WORKFLOWS_DIR);
+export async function listGithubWorkflowFiles(
+  repoDid: string,
+): Promise<string[]> {
+  const names = await listRepoFiles(repoDid, WORKFLOWS_DIR);
   return names
     .filter((name) => YAML_EXTENSIONS.some((ext) => name.endsWith(ext)))
     .map((name) => `${WORKFLOWS_DIR}/${name}`);

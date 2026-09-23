@@ -1,17 +1,13 @@
-/**
- * Discover repos on Tangled's own knot that still run GitHub workflows.
- *
- * The knot lists every repo it hosts, the mirror answers the folder probes,
- * and the appview names the candidates. Every step is an unauthenticated GET.
- * Repos on self-hosted knots are out of scope.
- */
-
 import { DidResolver, getHandle, MemoryCache } from '@atproto/identity';
 import { parseCanonicalResourceUri } from '@atcute/lexicons';
 import type { Main as RepoRecord } from '@atcute/tangled/types/repo';
 import type { $output as GetRepoOutput } from '@atcute/tangled/types/repo/getRepoByRepoDid';
 import type { $output as ListReposOutput } from '@atcute/tangled/types/sync/listRepos';
-import { listFiles, listWorkflowFiles, USER_AGENT } from './tangled.ts';
+import {
+  listRepoFiles,
+  listGithubWorkflowFiles,
+  USER_AGENT,
+} from './tangled.ts';
 
 /**
  * A candidate repo, named from its `sh.tangled.repo` record.
@@ -25,7 +21,7 @@ export type Repo = {
 const KNOT = 'https://knot1.tangled.sh';
 const APPVIEW = 'https://api.tangled.org';
 const PAGE_SIZE = 1000;
-const PROGRESS_EVERY = 200;
+const PROGRESS_INTERVAL = 200;
 
 const resolver = new DidResolver({ didCache: new MemoryCache() });
 
@@ -53,26 +49,11 @@ async function* listKnotRepos(): AsyncGenerator<
 }
 
 /**
- * Whether the repo has GitHub workflow files and no `.tangled` folder.
- * Throws when the mirror cannot read the repo.
+ * Resolve a repo DID to its owner's handle and repo name via the appview's
+ * `sh.tangled.repo` record. Returns `null` when the appview does not know
+ * the repo or the owner's handle does not resolve.
  */
-async function isCandidate(repoDid: string): Promise<boolean> {
-  const [workflows, tangled] = await Promise.all([
-    listWorkflowFiles(repoDid),
-    listFiles(repoDid, '.tangled'),
-  ]);
-  return workflows.length > 0 && tangled.length === 0;
-}
-
-/**
- * Name a repo from the current `sh.tangled.repo` record the appview holds
- * for it. Yields `null` when the appview does not know the repo or the
- * owner's handle does not resolve.
- *
- * Older records use the repo name as rkey and carry no `name`; newer ones
- * use a TID rkey and carry the name in the record.
- */
-async function describeRepo(repoDid: string): Promise<Repo | null> {
+async function resolveRepo(repoDid: string): Promise<Repo | null> {
   const url = new URL('/xrpc/sh.tangled.repo.getRepoByRepoDid', APPVIEW);
   url.searchParams.set('repoDid', repoDid);
   const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
@@ -87,24 +68,25 @@ async function describeRepo(repoDid: string): Promise<Repo | null> {
   if (!handle) {
     return null;
   }
+  // Some records have no `name` field, use rkey instead.
   return { handle, name: record.name ?? rkey, repoDid };
 }
 
 /**
- * Probe every active repo on the knot that has a default branch, and name
- * the candidates. Archived and disabled repos are left out.
+ * Probe every active repo on the knot that has a default branch.
+ * Excludes archived and disabled repos.
  */
 export async function discoverRepos(): Promise<Repo[]> {
   const repos: Repo[] = [];
-  let listed = 0;
+  let total = 0;
   let inactive = 0;
   let empty = 0;
   let unreadable = 0;
   let unnamed = 0;
   for await (const entry of listKnotRepos()) {
-    listed++;
-    if (listed % PROGRESS_EVERY === 0) {
-      console.log(`${listed} listed, ${repos.length} candidates so far`);
+    total++;
+    if (total % PROGRESS_INTERVAL === 0) {
+      console.log(`${total} listed, ${repos.length} candidates found`);
     }
     if (entry.status !== 'active') {
       inactive++;
@@ -115,14 +97,19 @@ export async function discoverRepos(): Promise<Repo[]> {
       continue;
     }
     try {
-      if (!(await isCandidate(entry.repo))) {
+      // Check if repo has GH workflows but no Tangled
+      const [githubWorkflows, tangled] = await Promise.all([
+        listGithubWorkflowFiles(entry.repo),
+        listRepoFiles(entry.repo, '.tangled'),
+      ]);
+      if (githubWorkflows.length === 0 || tangled.length > 0) {
         continue;
       }
     } catch {
       unreadable++;
       continue;
     }
-    const repo = await describeRepo(entry.repo);
+    const repo = await resolveRepo(entry.repo);
     if (!repo) {
       unnamed++;
       continue;
@@ -130,7 +117,7 @@ export async function discoverRepos(): Promise<Repo[]> {
     repos.push(repo);
   }
   console.log(
-    `${listed} repos on ${KNOT}: ${inactive} inactive, ${empty} empty, ` +
+    `${total} repos on ${KNOT}: ${inactive} inactive, ${empty} empty, ` +
       `${unreadable} unreadable, ${unnamed} unnamed, ` +
       `${repos.length} candidates`,
   );

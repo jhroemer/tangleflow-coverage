@@ -4,7 +4,7 @@ import {
   type Conversion,
 } from './convert.ts';
 import type { Repo } from './discover.ts';
-import { getBlob, listWorkflowFiles } from './tangled.ts';
+import { getBlob, listGithubWorkflowFiles } from './tangled.ts';
 
 /**
  * The conversion outcome of one workflow file. `owner` is the handle of the
@@ -30,7 +30,7 @@ export type Scan = {
  * Convert every GitHub workflow in `repo`.
  */
 async function scanRepo(repo: Repo): Promise<Result[]> {
-  const files = await listWorkflowFiles(repo.repoDid);
+  const files = await listGithubWorkflowFiles(repo.repoDid);
   return Promise.all(
     files.map(async (file) => {
       const conversion = convertWorkflow(await getBlob(repo.repoDid, file));

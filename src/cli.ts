@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -14,12 +13,12 @@ npm run report [-- <scan.json>]
 `;
 
 async function scan(): Promise<void> {
-  const result = await scanRepos(await discoverRepos());
-  const path = join(SCANS_DIR, `${result.date}.json`);
-  const replaced = existsSync(path);
+  const repos = await discoverRepos();
+  const result = await scanRepos(repos);
+  const scanFilePath = join(SCANS_DIR, `${result.date}.json`);
   await mkdir(SCANS_DIR, { recursive: true });
-  await writeFile(path, JSON.stringify(result, null, 2) + '\n', 'utf8');
-  console.log(`→ ${path}${replaced ? " (replaced today's)" : ''}`);
+  await writeFile(scanFilePath, JSON.stringify(result, null, 2) + '\n', 'utf8');
+  console.log(`→ ${scanFilePath}`);
 }
 
 /**
