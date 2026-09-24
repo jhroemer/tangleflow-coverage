@@ -38,7 +38,10 @@ export async function listRepoFiles(
 /**
  * Read the file at `path` at the repo's default branch.
  */
-export async function getBlob(repoDid: string, path: string): Promise<string> {
+export async function readRepoFile(
+  repoDid: string,
+  path: string,
+): Promise<string> {
   const res = await xrpc('getBlob', { repo: repoDid, ref: REF, path });
   if (!res.ok) {
     throw new Error(`getBlob ${repoDid} ${path}: ${res.status}`);

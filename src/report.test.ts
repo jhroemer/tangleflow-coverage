@@ -10,7 +10,6 @@ describe('rankBlockers', () => {
         owner: 'a.org',
         repo: 'a.org/mono',
         file: `.github/workflows/${i}.yml`,
-        ok: false,
         error: 'A',
       });
     }
@@ -19,7 +18,6 @@ describe('rankBlockers', () => {
         owner: `b${i}.org`,
         repo: `b${i}.org/repo`,
         file: '.github/workflows/ci.yml',
-        ok: false,
         error: 'B',
       });
     }
@@ -35,42 +33,36 @@ describe('rankBlockers', () => {
         owner: 'a.org',
         repo: 'a.org/one',
         file: 'x.yml',
-        ok: false,
         error: 'one owner',
       },
       {
         owner: 'a.org',
         repo: 'a.org/two',
         file: 'x.yml',
-        ok: false,
         error: 'one owner',
       },
       {
         owner: 'a.org',
         repo: 'a.org/three',
         file: 'x.yml',
-        ok: false,
         error: 'one owner',
       },
       {
         owner: 'a.org',
         repo: 'a.org/one',
         file: 'y.yml',
-        ok: false,
         error: 'three owners',
       },
       {
         owner: 'b.org',
         repo: 'b.org/one',
         file: 'y.yml',
-        ok: false,
         error: 'three owners',
       },
       {
         owner: 'c.org',
         repo: 'c.org/one',
         file: 'y.yml',
-        ok: false,
         error: 'three owners',
       },
     ];
@@ -86,21 +78,18 @@ describe('rankBlockers', () => {
         owner: 'a.org',
         repo: 'a.org/one',
         file: 'x.yml',
-        ok: false,
         error: 'Unsupported key "strategy" in job "test"',
       },
       {
         owner: 'b.org',
         repo: 'b.org/one',
         file: 'x.yml',
-        ok: false,
         error: 'Unsupported key "strategy" in job "lint"',
       },
       {
         owner: 'b.org',
         repo: 'b.org/one',
         file: 'y.yml',
-        ok: false,
         error: 'Unsupported key "strategy" in job "test"',
       },
     ];
@@ -120,7 +109,6 @@ describe('rankBlockers', () => {
         owner: 'a.org',
         repo: 'a.org/one',
         file: 'x.yml',
-        ok: true,
         error: null,
       },
     ];
@@ -135,21 +123,18 @@ describe('groupConvertible', () => {
         owner: 'a.org',
         repo: 'a.org/partial',
         file: 'ci.yml',
-        ok: true,
         error: null,
       },
       {
         owner: 'a.org',
         repo: 'a.org/partial',
         file: 'release.yml',
-        ok: false,
         error: 'A',
       },
       {
         owner: 'a.org',
         repo: 'a.org/partial',
         file: 'lint.yml',
-        ok: true,
         error: null,
       },
     ];
@@ -168,28 +153,24 @@ describe('groupConvertible', () => {
         owner: 'a.org',
         repo: 'a.org/two',
         file: 'ci.yml',
-        ok: true,
         error: null,
       },
       {
         owner: 'a.org',
         repo: 'a.org/two',
         file: 'lint.yml',
-        ok: true,
         error: null,
       },
       {
         owner: 'a.org',
         repo: 'a.org/one-b',
         file: 'ci.yml',
-        ok: true,
         error: null,
       },
       {
         owner: 'a.org',
         repo: 'a.org/one-a',
         file: 'ci.yml',
-        ok: true,
         error: null,
       },
     ];
@@ -206,7 +187,6 @@ describe('groupConvertible', () => {
         owner: 'a.org',
         repo: 'a.org/one',
         file: 'x.yml',
-        ok: false,
         error: 'A',
       },
     ];

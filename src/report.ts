@@ -38,7 +38,7 @@ export function rankBlockers(results: Result[]): Blocker[] {
     { repos: Set<string>; owners: Set<string>; files: number }
   >();
   for (const result of results) {
-    if (result.ok) {
+    if (!result.error) {
       continue;
     }
     const error = stripErrorDetails(result.error);
@@ -81,7 +81,7 @@ export function groupConvertible(results: Result[]): ConvertibleRepo[] {
       workflows: 0,
     };
     entry.workflows++;
-    if (result.ok) {
+    if (!result.error) {
       entry.converting.push(result.file);
     }
     byRepo.set(result.repo, entry);
@@ -111,7 +111,7 @@ export function renderReport(scan: Scan): string {
   const { results } = scan;
   const repos = new Set(results.map((result) => result.repo)).size;
   const owners = new Set(results.map((result) => result.owner)).size;
-  const converting = results.filter((result) => result.ok).length;
+  const converting = results.filter((result) => !result.error).length;
   const share = Math.round((100 * converting) / results.length);
   const blockers = rankBlockers(results);
   const shown = blockers.filter((blocker) => blocker.repos >= MIN_REPOS);
@@ -122,7 +122,7 @@ export function renderReport(scan: Scan): string {
   return [
     `# tangleflow coverage ${scan.date}`,
     '',
-    `tangleflow ${scan.tangleflow}. ${results.length} workflow files in ` +
+    `tangleflow ${scan.tangleflowVersion}. ${results.length} workflow files in ` +
       `${repos} repos from ${owners} owners.`,
     `${converting} files convert (${share}%). ${convertible.length} repos ` +
       `have a converting workflow, ${full.length} convert every workflow.`,
