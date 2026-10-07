@@ -1,9 +1,8 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { discoverRepos } from './discover.ts';
 import { renderReport } from './report.ts';
-import { scanRepos, type Scan } from './scan.ts';
+import { scanKnot, type Scan } from './scan.ts';
 
 const SCANS_DIR = 'scans';
 const REPORTS_DIR = 'reports';
@@ -13,8 +12,7 @@ npm run report [-- <scan.json>]
 `;
 
 async function scan(): Promise<void> {
-  const repos = await discoverRepos();
-  const result = await scanRepos(repos);
+  const result = await scanKnot();
   const scanFilePath = join(SCANS_DIR, `${result.date}.json`);
   await mkdir(SCANS_DIR, { recursive: true });
   await writeFile(scanFilePath, JSON.stringify(result, null, 2) + '\n', 'utf8');
