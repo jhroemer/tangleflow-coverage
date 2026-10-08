@@ -104,15 +104,15 @@ function cell(error: string): string {
 }
 
 /**
- * Render a scan as a markdown report: a summary, the error types hitting
- * `MIN_REPOS` or more repos, and the repos where every workflow converts.
+ * Render a scan as a markdown report: raw counts, one per line so reports
+ * diff cleanly, the error types hitting `MIN_REPOS` or more repos, and the
+ * repos where every workflow converts.
  */
 export function renderReport(scan: Scan): string {
   const { results } = scan;
   const repos = new Set(results.map((result) => result.repo)).size;
   const owners = new Set(results.map((result) => result.owner)).size;
   const converting = results.filter((result) => !result.error).length;
-  const share = Math.round((100 * converting) / results.length);
   const blockers = rankBlockers(results);
   const shown = blockers.filter((blocker) => blocker.repos >= MIN_REPOS);
   const convertible = groupConvertible(results);
@@ -122,14 +122,21 @@ export function renderReport(scan: Scan): string {
   return [
     `# tangleflow coverage ${scan.date}`,
     '',
-    `tangleflow ${scan.tangleflowVersion}. ${results.length} workflow files in ` +
-      `${repos} repos from ${owners} owners.`,
-    `${converting} files convert (${share}%). ${convertible.length} repos ` +
-      `have a converting workflow, ${full.length} convert every workflow.`,
+    'Covers active repos on knot1.tangled.sh that have workflow files in ' +
+      '`.github/workflows` and no `.tangled` folder. Repos whose owner ' +
+      'handle does not resolve, or whose files cannot be read, are left out.',
+    '',
+    `- tangleflow version: ${scan.tangleflowVersion}`,
+    `- owners: ${owners}`,
+    `- repos: ${repos}`,
+    `- repos converting some workflows: ${convertible.length}`,
+    `- repos converting all workflows: ${full.length}`,
+    `- workflows: ${results.length}`,
+    `- workflows converting: ${converting}`,
+    `- workflows failing: ${results.length - converting}`,
+    `- error types: ${blockers.length}`,
     '',
     `## Errors hitting ${MIN_REPOS} or more repos`,
-    '',
-    `${shown.length} of ${blockers.length} error types.`,
     '',
     '| error | repos | owners | files |',
     '| --- | ---: | ---: | ---: |',
