@@ -7,12 +7,12 @@
     "node": ">=24"
   },
   "scripts": {
-    "scan": "node src/cli.ts scan",
-    "report": "node src/cli.ts report",
+    "coverage:scan": "node coverage/cli.ts scan",
+    "coverage:report": "node coverage/cli.ts report",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint src && oxfmt --check src",
-    "format": "oxfmt --write src"
+    "lint": "oxlint . && oxfmt --check '**/*.ts'",
+    "format": "oxfmt --write '**/*.ts'"
   },
   "dependencies": {
     "@atcute/lexicons": "2.1.0",

@@ -1,47 +1,37 @@
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { renderReport } from './report.ts';
 import { scanKnot, type Scan } from './scan.ts';
 
-const SCANS_DIR = 'scans';
-const REPORTS_DIR = 'reports';
+const DIR = 'coverage';
+const REPORT_PATH = join(DIR, 'README.md');
 const USAGE = `Usage: 
-npm run scan
-npm run report [-- <scan.json>]
+npm run coverage:scan
+npm run coverage:report [-- <scan.json>]
 `;
 
 async function scan(): Promise<void> {
   const result = await scanKnot();
-  const scanFilePath = join(SCANS_DIR, `${result.date}.json`);
-  await mkdir(SCANS_DIR, { recursive: true });
+  const scanFilePath = join(DIR, `${result.date}.json`);
   await writeFile(scanFilePath, JSON.stringify(result, null, 2) + '\n', 'utf8');
   console.log(`→ ${scanFilePath}`);
 }
 
 /**
  * Path of the newest scan. Scans are named by date, so name order is date
- * order. A missing folder means no scan has run yet.
+ * order.
  */
 async function latestScanPath(): Promise<string> {
-  let names: string[];
-  try {
-    names = await readdir(SCANS_DIR);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-      names = [];
-    } else {
-      throw err;
-    }
-  }
+  const names = await readdir(DIR);
   const latest = names
-    .filter((name) => name.endsWith('.json'))
+    .filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))
     .sort()
     .at(-1);
   if (!latest) {
-    throw new Error(`no scans in ${SCANS_DIR}/; run npm run scan first`);
+    throw new Error(`no scans in ${DIR}/; run npm run coverage:scan first`);
   }
-  return join(SCANS_DIR, latest);
+  return join(DIR, latest);
 }
 
 async function report(scanPath: string): Promise<void> {
@@ -49,10 +39,8 @@ async function report(scanPath: string): Promise<void> {
   if (!Array.isArray(input.results)) {
     throw new Error(`${scanPath} is not a scan`);
   }
-  const path = join(REPORTS_DIR, `${input.date}.md`);
-  await mkdir(REPORTS_DIR, { recursive: true });
-  await writeFile(path, renderReport(input), 'utf8');
-  console.log(`${scanPath} → ${path}`);
+  await writeFile(REPORT_PATH, renderReport(input), 'utf8');
+  console.log(`${scanPath} → ${REPORT_PATH}`);
 }
 
 async function main(): Promise<void> {
