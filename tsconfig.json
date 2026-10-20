@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "nodenext",
     "target": "esnext",
-    "types": ["node"],
+    "types": ["node", "@atcute/tangled"],
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "strict": true,

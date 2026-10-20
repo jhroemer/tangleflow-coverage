@@ -9,12 +9,14 @@
   "scripts": {
     "coverage:scan": "node coverage/cli.ts scan",
     "coverage:report": "node coverage/cli.ts report",
+    "if-usage:scan": "node if-usage/scan.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint . && oxfmt --check '**/*.ts'",
     "format": "oxfmt --write '**/*.ts'"
   },
   "dependencies": {
+    "@atcute/client": "5.1.2",
     "@atcute/lexicons": "2.1.0",
     "@atproto/identity": "0.5.13",
     "tangleflow": "0.7.1",
