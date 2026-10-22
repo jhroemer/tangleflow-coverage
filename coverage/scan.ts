@@ -1,13 +1,12 @@
+import { ClientResponseError } from '@atcute/client';
 import { DidResolver, getHandle, MemoryCache } from '@atproto/identity';
-import { parseCanonicalResourceUri } from '@atcute/lexicons';
-import type { $output as TreeOutput } from '@atcute/tangled/types/git/temp/getTree';
+import { type Did, parseCanonicalResourceUri } from '@atcute/lexicons';
 import type { Main as RepoRecord } from '@atcute/tangled/types/repo';
-import type { $output as GetRepoOutput } from '@atcute/tangled/types/repo/getRepoByRepoDid';
-import type { $output as ListReposOutput } from '@atcute/tangled/types/sync/listRepos';
 import { readFileSync } from 'node:fs';
 import { findPackageJSON } from 'node:module';
 import { convertWorkflowToTangled } from 'tangleflow';
 import { parse } from 'yaml';
+import * as api from '../api/api.ts';
 
 /**
  * The conversion outcome of one workflow file. `owner` is the handle of the
@@ -36,53 +35,16 @@ export type Scan = {
 type Candidate = {
   owner: string;
   repo: string;
-  repoDid: string;
+  repoDid: Did;
   workflowFiles: string[];
 };
 
 const KNOT = 'https://knot1.tangled.sh';
-const APPVIEW = 'https://api.tangled.org';
-const MIRROR = 'https://mirror-fsn.tangled.network';
-const USER_AGENT = 'tangleflow-coverage';
-const REF = 'HEAD';
-const PAGE_SIZE = 1000;
 const PROGRESS_INTERVAL = 200;
 const WORKFLOWS_DIR = '.github/workflows';
 const YAML_EXTENSIONS = ['.yml', '.yaml'] as const;
 
 const resolver = new DidResolver({ didCache: new MemoryCache() });
-
-function xrpc(
-  service: string,
-  method: string,
-  params: Record<string, string>,
-): Promise<Response> {
-  const url = new URL(`/xrpc/${method}`, service);
-  url.search = new URLSearchParams(params).toString();
-  return fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-}
-
-/**
- * Yield every repo the knot hosts, with its status and default branch.
- */
-async function* listKnotRepos(): AsyncGenerator<
-  ListReposOutput['repos'][number]
-> {
-  let cursor: string | undefined;
-  do {
-    const params: Record<string, string> = { limit: String(PAGE_SIZE) };
-    if (cursor) {
-      params.cursor = cursor;
-    }
-    const res = await xrpc(KNOT, 'sh.tangled.sync.listRepos', params);
-    if (!res.ok) {
-      throw new Error(`sync.listRepos: ${res.status}`);
-    }
-    const body = (await res.json()) as ListReposOutput;
-    yield* body.repos;
-    cursor = body.cursor;
-  } while (cursor);
-}
 
 /**
  * Resolve a repo DID to its owner's handle and repo name via the appview's
@@ -90,17 +52,17 @@ async function* listKnotRepos(): AsyncGenerator<
  * the repo or the owner's handle does not resolve.
  */
 async function resolveRepo(
-  repoDid: string,
+  repoDid: Did,
 ): Promise<{ handle: string; name: string } | null> {
-  const res = await xrpc(APPVIEW, 'sh.tangled.repo.getRepoByRepoDid', {
-    repoDid,
+  const found = await api.getTangledRepoByRepoDid(repoDid).catch((err) => {
+    if (err instanceof ClientResponseError) return null;
+    throw err;
   });
-  if (!res.ok) {
+  if (!found) {
     return null;
   }
-  const { uri, value } = (await res.json()) as GetRepoOutput;
-  const record = value as RepoRecord;
-  const { repo: ownerDid, rkey } = parseCanonicalResourceUri(uri);
+  const record = found.value as RepoRecord;
+  const { repo: ownerDid, rkey } = parseCanonicalResourceUri(found.uri);
   const doc = await resolver.resolve(ownerDid).catch(() => null);
   const handle = doc ? getHandle(doc) : undefined;
   if (!handle) {
@@ -111,45 +73,32 @@ async function resolveRepo(
 }
 
 /**
- * List the entry names in `path` at the repo's default branch. The mirror
- * answers 404 for a missing path, which yields an empty list.
+ * List the entry names in `path` at the repo's default branch. A missing
+ * path answers 404, which yields an empty list.
  */
-async function listRepoFiles(repoDid: string, path: string): Promise<string[]> {
-  const res = await xrpc(MIRROR, 'sh.tangled.git.temp.getTree', {
-    repo: repoDid,
-    ref: REF,
-    path,
+async function listRepoFiles(repoDid: Did, path: string): Promise<string[]> {
+  const tree = await api.getTangledRepoPathFiles(repoDid, path).catch((err) => {
+    if (err instanceof ClientResponseError && err.status === 404) {
+      return null;
+    }
+    throw err;
   });
-  if (res.status === 404) {
-    return [];
-  }
-  if (!res.ok) {
-    throw new Error(`getTree ${repoDid} ${path}: ${res.status}`);
-  }
-  const body = (await res.json()) as TreeOutput;
-  return body.files.map((entry) => entry.name);
+  return tree?.files.map((entry) => entry.name) ?? [];
 }
 
 /**
  * Read the file at `path` at the repo's default branch.
  */
-async function readRepoFile(repoDid: string, path: string): Promise<string> {
-  const res = await xrpc(MIRROR, 'sh.tangled.git.temp.getBlob', {
-    repo: repoDid,
-    ref: REF,
-    path,
-  });
-  if (!res.ok) {
-    throw new Error(`getBlob ${repoDid} ${path}: ${res.status}`);
-  }
-  return res.text();
+async function readRepoFile(repoDid: Did, path: string): Promise<string> {
+  const blob = await api.getTangledBlob(repoDid, path);
+  return blob.text();
 }
 
 /**
  * List the GitHub workflow files at the repo's default branch as
  * repo-relative paths (`.github/workflows/<name>.yml|.yaml`).
  */
-async function listGithubWorkflowFiles(repoDid: string): Promise<string[]> {
+async function listGithubWorkflowFiles(repoDid: Did): Promise<string[]> {
   const names = await listRepoFiles(repoDid, WORKFLOWS_DIR);
   return names
     .filter((name) => YAML_EXTENSIONS.some((ext) => name.endsWith(ext)))
@@ -167,7 +116,7 @@ async function findCandidates(): Promise<Candidate[]> {
   let empty = 0;
   let unreadable = 0;
   let unnamed = 0;
-  for await (const entry of listKnotRepos()) {
+  for await (const entry of api.getTangledRepos()) {
     total++;
     if (total % PROGRESS_INTERVAL === 0) {
       console.log(`${total} listed, ${candidates.length} candidates found`);

@@ -5,8 +5,7 @@ import {
   type RetryFetchHandlerOptions,
   simpleFetchHandler,
 } from '@atcute/client';
-
-type RepoDid = `did:${string}:${string}`;
+import type { Did } from '@atcute/lexicons';
 
 const retryOptions: Omit<RetryFetchHandlerOptions, 'handler'> = {
   maxRetries: 5,
@@ -29,6 +28,13 @@ const mirrorClient = new Client({
   }),
 });
 
+const appviewClient = new Client({
+  handler: retryFetchHandler({
+    handler: simpleFetchHandler({ service: 'https://api.tangled.org' }),
+    ...retryOptions,
+  }),
+});
+
 export async function* getTangledRepos() {
   let cursor: string | undefined;
   const limit = 1000;
@@ -46,16 +52,16 @@ export async function* getTangledRepos() {
   } while (cursor);
 }
 
-export async function getTangledRepoPathFiles(repoDid: RepoDid) {
+export async function getTangledRepoPathFiles(repoDid: Did, path: string) {
   return await ok(
     mirrorClient.get('sh.tangled.git.temp.getTree', {
-      params: { ref: 'HEAD', repo: repoDid, path: '.github/workflows' },
+      params: { ref: 'HEAD', repo: repoDid, path },
       headers: { 'user-agent': 'tangleflow-coverage' },
     }),
   );
 }
 
-export async function getTangledRepoBlob(repoDid: RepoDid, path: string) {
+export async function getTangledRepoBlob(repoDid: Did, path: string) {
   return await ok(
     mirrorClient.get('sh.tangled.git.temp.getBlob', {
       params: { repo: repoDid, path },
@@ -65,11 +71,20 @@ export async function getTangledRepoBlob(repoDid: RepoDid, path: string) {
   );
 }
 
-export async function getTangledBlob(repoDid: RepoDid, path: string) {
+export async function getTangledBlob(repoDid: Did, path: string) {
   return await ok(
     mirrorClient.get('sh.tangled.git.temp.getBlob', {
       params: { repo: repoDid, path },
       as: 'blob',
+      headers: { 'user-agent': 'tangleflow-coverage' },
+    }),
+  );
+}
+
+export async function getTangledRepoByRepoDid(repoDid: Did) {
+  return await ok(
+    appviewClient.get('sh.tangled.repo.getRepoByRepoDid', {
+      params: { repoDid },
       headers: { 'user-agent': 'tangleflow-coverage' },
     }),
   );

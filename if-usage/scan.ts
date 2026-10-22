@@ -18,7 +18,7 @@ async function main() {
     await sleep(100);
     try {
       const githubFolder = await api
-        .getTangledRepoPathFiles(repoDid)
+        .getTangledRepoPathFiles(repoDid, '.github/workflows')
         .catch((e) => {
           if (e instanceof ClientResponseError && e.status === 404) {
             return null;
