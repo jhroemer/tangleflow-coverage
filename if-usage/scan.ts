@@ -7,12 +7,15 @@ const CURRENT_DATE = new Date();
 const OUTPUTFILE = `if-usage/${CURRENT_DATE.toISOString().slice(0, 10)}.jsonl`;
 const HAS_YAML_FILE_ENDING = /\.(yaml|yml)$/;
 
+// 2. Call getTree on '' first, and only request .github/workflows if the root listing contains .github. The root always exists, so the mirror should answer from its local copy and misses rarely get forwarded to knot1.
+// 3. Write failures to a file (repoDid, error) instead of only logging them, so you can retry just those repos later.
+
 async function main() {
   let processedRepos = 0;
 
   for await (const repo of api.getTangledRepos()) {
     const repoDid = repo.repo;
-    // TODO: check if repo is deleted from Tangled?
+    if (repo.status !== 'active' || !repo.defaultBranch?.head) continue;
 
     // For rate-limiting
     await sleep(100);
