@@ -5,10 +5,8 @@ import * as api from '../api/api.ts';
 
 const CURRENT_DATE = new Date();
 const OUTPUTFILE = `if-usage/${CURRENT_DATE.toISOString().slice(0, 10)}.jsonl`;
+const ERRORS_FILE = `if-usage/${CURRENT_DATE.toISOString().slice(0, 10)}-errors.jsonl`;
 const HAS_YAML_FILE_ENDING = /\.(yaml|yml)$/;
-
-// 2. Call getTree on '' first, and only request .github/workflows if the root listing contains .github. The root always exists, so the mirror should answer from its local copy and misses rarely get forwarded to knot1.
-// 3. Write failures to a file (repoDid, error) instead of only logging them, so you can retry just those repos later.
 
 async function main() {
   let processedRepos = 0;
@@ -55,6 +53,10 @@ async function main() {
       }
     } catch (e) {
       console.error(`there was an error for repo: ${repoDid}: ${e}`);
+      appendFileSync(
+        ERRORS_FILE,
+        JSON.stringify({ repo: repoDid, error: String(e) }) + '\n',
+      );
     } finally {
       processedRepos++;
       if (processedRepos % 100 === 0) {
