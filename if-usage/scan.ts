@@ -20,6 +20,9 @@ async function main() {
     // For rate-limiting
     await sleep(100);
     try {
+      const repoFolder = await api.getTangledRepoPathFiles(repoDid, '');
+      if (!repoFolder.files.some(({ name }) => name === '.github')) continue;
+
       const githubFolder = await api
         .getTangledRepoPathFiles(repoDid, '.github/workflows')
         .catch((e) => {
