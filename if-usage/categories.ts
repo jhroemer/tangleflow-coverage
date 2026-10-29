@@ -270,6 +270,14 @@ function main(filepath: string) {
   const byCount = <T>(entries: Iterable<[T, number]>) =>
     [...entries].sort(([, a], [, b]) => b - a);
   const codeCell = (text: string) => `\`${text.replaceAll('|', '\\|')}\``;
+  const heading = (name: string, level: If['level']) =>
+    `${name}, ${level} level`;
+  // Heading ids as Tangled generates them.
+  const anchor = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, '')
+      .replace(/[ -]+/g, '-');
 
   console.log('## overview\n');
   console.log('| | count |');
@@ -297,16 +305,19 @@ function main(filepath: string) {
   );
   for (const { name, level, count, repos } of sorted) {
     const docs = CATEGORIES.find((category) => category.name === name)?.docs;
-    const links = (docs ?? []).map((url, i) => ` [${i + 1}](${url})`).join(',');
+    const label = docs
+      ? `[${name}](#${anchor(heading(name, level))}) ` +
+        `(${docs.map((url, i) => `[docs${docs.length > 1 ? ` ${i + 1}` : ''}](${url})`).join(', ')})`
+      : name;
     console.log(
-      `| ${name}${links} | ${level} | ${count} | ` +
+      `| ${label} | ${level} | ${count} | ` +
         `${repos.size} | ${percent(repos.size, allRepos.size)} |`,
     );
   }
 
   for (const { name, level, shapes } of sorted) {
     if (name === CONSTANT || name === OTHER) continue;
-    console.log(`\n## ${name}, ${level} level\n`);
+    console.log(`\n## ${heading(name, level)}\n`);
     console.log('| ifs | shape |');
     console.log('| --- | --- |');
     for (const [key, count] of byCount(shapes).slice(0, TOP_SHAPES)) {
