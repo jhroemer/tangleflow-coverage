@@ -14,8 +14,8 @@
     "if-usage:report": "node if-usage/categories.ts if-usage/workflows.jsonl > if-usage/report.md",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint . && oxfmt --check '**/*.ts'",
-    "format": "oxfmt --write '**/*.ts'"
+    "lint": "oxlint . && oxfmt --check '**/*.{ts,md}'",
+    "format": "oxfmt --write '**/*.{ts,md}'"
   },
   "dependencies": {
     "@actions/expressions": "0.3.61",
