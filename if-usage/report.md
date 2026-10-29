@@ -9,27 +9,30 @@
 
 ## categories
 
-| category            | level | ifs  | repos | % of repos |
-| ------------------- | ----- | ---- | ----- | ---------- |
-| trigger or ref      | job   | 1335 | 522   | 19.6%      |
-| trigger or ref      | step  | 929  | 372   | 14.0%      |
-| status function     | job   | 397  | 151   | 5.7%       |
-| status function     | step  | 1229 | 317   | 11.9%      |
-| earlier step result | step  | 1363 | 352   | 13.2%      |
-| configuration       | job   | 254  | 60    | 2.3%       |
-| configuration       | step  | 878  | 132   | 5.0%       |
-| matrix              | step  | 1035 | 204   | 7.7%       |
-| earlier job result  | job   | 822  | 207   | 7.8%       |
-| earlier job result  | step  | 132  | 45    | 1.7%       |
-| repo or actor guard | job   | 873  | 243   | 9.1%       |
-| repo or actor guard | step  | 42   | 19    | 0.7%       |
-| runner              | step  | 349  | 67    | 2.5%       |
-| other               | job   | 9    | 3     | 0.1%       |
-| other               | step  | 26   | 9     | 0.3%       |
-| constant            | job   | 8    | 8     | 0.3%       |
-| constant            | step  | 3    | 3     | 0.1%       |
+| category                                                                                                                                                                                                          | level | ifs  | repos | % of repos |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---- | ----- | ---------- |
+| github.event / github.ref [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context)                                                                                         | job   | 1335 | 522   | 19.6%      |
+| github.event / github.ref [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context)                                                                                         | step  | 929  | 372   | 14.0%      |
+| status check functions [1](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions)                                                                                 | job   | 397  | 151   | 5.7%       |
+| status check functions [1](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions)                                                                                 | step  | 1229 | 317   | 11.9%      |
+| steps context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#steps-context)                                                                                                      | step  | 1363 | 352   | 13.2%      |
+| matrix context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#matrix-context), [2](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#strategy-context) | step  | 1035 | 204   | 7.7%       |
+| needs context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#needs-context), [2](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#jobs-context)       | job   | 822  | 207   | 7.8%       |
+| needs context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#needs-context), [2](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#jobs-context)       | step  | 132  | 45    | 1.7%       |
+| github.repository / github.actor [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context)                                                                                  | job   | 873  | 243   | 9.1%       |
+| github.repository / github.actor [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context)                                                                                  | step  | 42   | 19    | 0.7%       |
+| inputs context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#inputs-context)                                                                                                    | job   | 225  | 48    | 1.8%       |
+| inputs context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#inputs-context)                                                                                                    | step  | 382  | 59    | 2.2%       |
+| env context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#env-context)                                                                                                          | step  | 391  | 77    | 2.9%       |
+| runner context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context)                                                                                                    | step  | 349  | 67    | 2.5%       |
+| vars context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#vars-context)                                                                                                        | job   | 29   | 13    | 0.5%       |
+| vars context [1](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#vars-context)                                                                                                        | step  | 123  | 13    | 0.5%       |
+| other                                                                                                                                                                                                             | job   | 9    | 3     | 0.1%       |
+| other                                                                                                                                                                                                             | step  | 26   | 9     | 0.3%       |
+| constant                                                                                                                                                                                                          | job   | 8    | 8     | 0.3%       |
+| constant                                                                                                                                                                                                          | step  | 3    | 3     | 0.1%       |
 
-## trigger or ref, job level
+## github.event / github.ref, job level
 
 | ifs | shape                                                                                                                                                                                                                                                                                                                                  |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,7 +47,7 @@
 | 30  | `!github.event.repository.is_template`                                                                                                                                                                                                                                                                                                 |
 | 23  | `!contains(github.event.head_commit.message, ?)`                                                                                                                                                                                                                                                                                       |
 
-## trigger or ref, step level
+## github.event / github.ref, step level
 
 | ifs | shape                                       |
 | --- | ------------------------------------------- |
@@ -59,7 +62,7 @@
 | 12  | `github.event_name != ? && vars.* != ?`     |
 | 11  | `github.ref != ?`                           |
 
-## status function, job level
+## status check functions, job level
 
 | ifs | shape                                                                                                                                                                                                  |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -74,7 +77,7 @@
 | 9   | `always() && (github.ref == ? \|\| github.ref == ?) && (needs.*.outputs.* == ? \|\| (github.event_name == ? && inputs.*)) && needs.*.result == ? && (needs.*.result == ? \|\| needs.*.outputs.* != ?)` |
 | 8   | `(github.repository_owner == ? \|\| github.repository_owner == ?) && always()`                                                                                                                         |
 
-## status function, step level
+## status check functions, step level
 
 | ifs | shape                                                 |
 | --- | ----------------------------------------------------- |
@@ -89,7 +92,7 @@
 | 18  | `success() && steps.*.outputs.* != steps.*.outputs.*` |
 | 13  | `steps.*.outputs.* != ? && success()`                 |
 
-## earlier step result, step level
+## steps context, step level
 
 | ifs | shape                                                 |
 | --- | ----------------------------------------------------- |
@@ -104,37 +107,7 @@
 | 19  | `failure() && steps.*.outcome == ?`                   |
 | 18  | `success() && steps.*.outputs.* != steps.*.outputs.*` |
 
-## configuration, job level
-
-| ifs | shape                                                                                                                                                                                                  |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 43  | `always() && (needs.*.outputs.* == ? \|\| (github.event_name == ? && inputs.*))`                                                                                                                       |
-| 22  | `inputs.*`                                                                                                                                                                                             |
-| 15  | `inputs.* == ? \|\| inputs.* == ?`                                                                                                                                                                     |
-| 14  | `inputs.* != ? && needs.*.outputs.* && github.repository == ?`                                                                                                                                         |
-| 12  | `inputs.* == ?`                                                                                                                                                                                        |
-| 9   | `always() && (github.ref == ? \|\| github.ref == ?) && (needs.*.outputs.* == ? \|\| (github.event_name == ? && inputs.*)) && needs.*.result == ? && (needs.*.result == ? \|\| needs.*.outputs.* != ?)` |
-| 7   | `!contains(vars.*, ?)`                                                                                                                                                                                 |
-| 6   | `needs.*.outputs.* == ? && !inputs.*`                                                                                                                                                                  |
-| 6   | `github.event_name != ? && (vars.* != ? \|\| vars.* != ?)`                                                                                                                                             |
-| 5   | `!inputs.*`                                                                                                                                                                                            |
-
-## configuration, step level
-
-| ifs | shape                            |
-| --- | -------------------------------- |
-| 138 | `env.* == ?`                     |
-| 121 | `env.* != ?`                     |
-| 102 | `inputs.* == ?`                  |
-| 67  | `vars.* != ?`                    |
-| 54  | `inputs.*`                       |
-| 47  | `inputs.* != ?`                  |
-| 35  | `!inputs.*`                      |
-| 18  | `env.* != ? && env.* == ?`       |
-| 13  | `vars.* == ?`                    |
-| 12  | `inputs.* != ? && inputs.* != ?` |
-
-## matrix, step level
+## matrix context, step level
 
 | ifs | shape                              |
 | --- | ---------------------------------- |
@@ -149,7 +122,7 @@
 | 8   | `matrix.* == ? \|\| matrix.* == ?` |
 | 8   | `matrix.*.cross`                   |
 
-## earlier job result, job level
+## needs context, job level
 
 | ifs | shape                                                                                                                        |
 | --- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -164,7 +137,7 @@
 | 14  | `inputs.* != ? && needs.*.outputs.* && github.repository == ?`                                                               |
 | 14  | `always() && needs.*.result == ?`                                                                                            |
 
-## earlier job result, step level
+## needs context, step level
 
 | ifs | shape                                                                        |
 | --- | ---------------------------------------------------------------------------- |
@@ -179,7 +152,7 @@
 | 2   | `needs.*.result != ?`                                                        |
 | 2   | `matrix.* != ? && needs.*.outputs.* == ? && steps.*.outputs.* != ?`          |
 
-## repo or actor guard, job level
+## github.repository / github.actor, job level
 
 | ifs | shape                                                                                                                                                                                           |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -194,7 +167,7 @@
 | 8   | `(github.repository_owner == ? \|\| github.repository_owner == ?) && always()`                                                                                                                  |
 | 8   | `github.repository == ? && github.ref == ?`                                                                                                                                                     |
 
-## repo or actor guard, step level
+## github.repository / github.actor, step level
 
 | ifs | shape                                                                                                                                                                                             |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -209,7 +182,52 @@
 | 2   | `github.repository == ? && github.ref == ? && runner.os == ? && inputs.* && !vars.*`                                                                                                              |
 | 1   | `always() && github.event.pull_request.head.repo.full_name == github.repository`                                                                                                                  |
 
-## runner, step level
+## inputs context, job level
+
+| ifs | shape                                                                                                                                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 43  | `always() && (needs.*.outputs.* == ? \|\| (github.event_name == ? && inputs.*))`                                                                                                                                                       |
+| 22  | `inputs.*`                                                                                                                                                                                                                             |
+| 15  | `inputs.* == ? \|\| inputs.* == ?`                                                                                                                                                                                                     |
+| 14  | `inputs.* != ? && needs.*.outputs.* && github.repository == ?`                                                                                                                                                                         |
+| 12  | `inputs.* == ?`                                                                                                                                                                                                                        |
+| 9   | `always() && (github.ref == ? \|\| github.ref == ?) && (needs.*.outputs.* == ? \|\| (github.event_name == ? && inputs.*)) && needs.*.result == ? && (needs.*.result == ? \|\| needs.*.outputs.* != ?)`                                 |
+| 6   | `needs.*.outputs.* == ? && !inputs.*`                                                                                                                                                                                                  |
+| 5   | `!inputs.*`                                                                                                                                                                                                                            |
+| 4   | `(github.event_name == ? && github.event.pull_request.merged == true && github.event.pull_request.base.ref == ? && github.event.pull_request.head.repo.full_name == github.repository) \|\| (github.event_name == ? && inputs.* == ?)` |
+| 4   | `(github.repository_owner == ? \|\| github.repository_owner == ?) && (inputs.* == true \|\| needs.*.outputs.* == ?)`                                                                                                                   |
+
+## inputs context, step level
+
+| ifs | shape                                  |
+| --- | -------------------------------------- |
+| 102 | `inputs.* == ?`                        |
+| 54  | `inputs.*`                             |
+| 47  | `inputs.* != ?`                        |
+| 35  | `!inputs.*`                            |
+| 12  | `inputs.* != ? && inputs.* != ?`       |
+| 8   | `github.event_name == ? && inputs.*`   |
+| 8   | `inputs.* == true \|\| inputs.* == ?`  |
+| 6   | `steps.*.outputs.* == ? \|\| inputs.*` |
+| 6   | `runner.os == ? && inputs.*`           |
+| 5   | `inputs.* == true`                     |
+
+## env context, step level
+
+| ifs | shape                                                                              |
+| --- | ---------------------------------------------------------------------------------- |
+| 138 | `env.* == ?`                                                                       |
+| 121 | `env.* != ?`                                                                       |
+| 18  | `env.* != ? && env.* == ?`                                                         |
+| 12  | `env.* != ? && env.* != ?`                                                         |
+| 9   | `always() && env.* == ?`                                                           |
+| 8   | `failure() && env.* != ?`                                                          |
+| 7   | `env.* == ? && env.* != ?`                                                         |
+| 4   | `env.* == ? && matrix.* == ?`                                                      |
+| 4   | `github.event_name == ? && env.* == ?`                                             |
+| 4   | `github.repository == ? && !env.* && github.ref == ? && runner.os == ? && !vars.*` |
+
+## runner context, step level
 
 | ifs | shape                                                                              |
 | --- | ---------------------------------------------------------------------------------- |
@@ -223,3 +241,33 @@
 | 4   | `github.repository == ? && !env.* && github.ref == ? && runner.os == ? && !vars.*` |
 | 3   | `runner.os == ? \|\| runner.os == ?`                                               |
 | 3   | `runner.os == ? && env.*`                                                          |
+
+## vars context, job level
+
+| ifs | shape                                                                                                                                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7   | `!contains(vars.*, ?)`                                                                                                                                                                                                  |
+| 6   | `github.event_name != ? && (vars.* != ? \|\| vars.* != ?)`                                                                                                                                                              |
+| 4   | `vars.* != ?`                                                                                                                                                                                                           |
+| 2   | `github.event_name == ? && startswith(github.ref, ?) && vars.* == ?`                                                                                                                                                    |
+| 2   | `vars.* == ?`                                                                                                                                                                                                           |
+| 2   | `vars.* != ? \|\| vars.* != ?`                                                                                                                                                                                          |
+| 1   | `always() && needs.*.result == ? && needs.*.result == ? && needs.*.result == ? && needs.*.result == ? && needs.*.result == ? && needs.*.result == ? && (needs.*.result == ? \|\| (vars.* != ? && needs.*.result == ?))` |
+| 1   | `github.event_name != ? && github.ref == ? && vars.* == ?`                                                                                                                                                              |
+| 1   | `contains(fromjson(vars.* \|\| ?), github.ref_name)`                                                                                                                                                                    |
+| 1   | `vars.* == ? \|\| contains(vars.*, github.ref_name)`                                                                                                                                                                    |
+
+## vars context, step level
+
+| ifs | shape                                                                                |
+| --- | ------------------------------------------------------------------------------------ |
+| 67  | `vars.* != ?`                                                                        |
+| 13  | `vars.* == ?`                                                                        |
+| 12  | `github.event_name != ? && vars.* != ?`                                              |
+| 8   | `runner.os == ? && !vars.*`                                                          |
+| 4   | `github.repository == ? && !env.* && github.ref == ? && runner.os == ? && !vars.*`   |
+| 3   | `vars.* != ? && !contains(vars.*, ?)`                                                |
+| 3   | `vars.*`                                                                             |
+| 3   | `github.repository == ? && github.ref == ? && runner.os == ? && !vars.*`             |
+| 2   | `github.repository == ? && github.ref == ? && runner.os == ? && inputs.* && !vars.*` |
+| 1   | `vars.* != ? && vars.* != ?`                                                         |

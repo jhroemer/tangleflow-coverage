@@ -59,27 +59,66 @@ const USER_NAMED: Record<string, number[]> = {
   secrets: [1],
 };
 
+const DOCS =
+  'https://docs.github.com/en/actions/reference/workflows-and-actions';
+
 // Checked in order against every context path and function an `if` references.
 // An `if` lands in every category one of its references matches.
-const CATEGORIES: { name: string; matches: RegExp }[] = [
+const CATEGORIES: { name: string; matches: RegExp; docs: string[] }[] = [
   {
-    name: 'status function',
+    name: 'status check functions',
     matches: /^(always|failure|success|cancelled)\(\)$/,
+    docs: [`${DOCS}/expressions#status-check-functions`],
   },
-  { name: 'earlier step result', matches: /^steps\./ },
-  { name: 'earlier job result', matches: /^(needs|jobs)\./ },
-  { name: 'matrix', matches: /^(matrix|strategy)\./ },
   {
-    name: 'trigger or ref',
+    name: 'steps context',
+    matches: /^steps\./,
+    docs: [`${DOCS}/contexts#steps-context`],
+  },
+  {
+    name: 'needs context',
+    matches: /^(needs|jobs)\./,
+    docs: [`${DOCS}/contexts#needs-context`, `${DOCS}/contexts#jobs-context`],
+  },
+  {
+    name: 'matrix context',
+    matches: /^(matrix|strategy)\./,
+    docs: [
+      `${DOCS}/contexts#matrix-context`,
+      `${DOCS}/contexts#strategy-context`,
+    ],
+  },
+  {
+    name: 'github.event / github.ref',
     matches:
       /^github\.(event_name|event|ref|ref_name|ref_type|head_ref|base_ref)(\.|$)/,
+    docs: [`${DOCS}/contexts#github-context`],
   },
   {
-    name: 'repo or actor guard',
+    name: 'github.repository / github.actor',
     matches: /^github\.(repository|repository_owner|actor|triggering_actor)$/,
+    docs: [`${DOCS}/contexts#github-context`],
   },
-  { name: 'runner', matches: /^runner\./ },
-  { name: 'configuration', matches: /^(inputs|env|vars|secrets)\./ },
+  {
+    name: 'runner context',
+    matches: /^runner\./,
+    docs: [`${DOCS}/contexts#runner-context`],
+  },
+  {
+    name: 'inputs context',
+    matches: /^inputs\./,
+    docs: [`${DOCS}/contexts#inputs-context`],
+  },
+  {
+    name: 'env context',
+    matches: /^env\./,
+    docs: [`${DOCS}/contexts#env-context`],
+  },
+  {
+    name: 'vars context',
+    matches: /^vars\./,
+    docs: [`${DOCS}/contexts#vars-context`],
+  },
 ];
 
 const CONSTANT = 'constant';
@@ -257,8 +296,10 @@ function main(filepath: string) {
       a.level.localeCompare(b.level),
   );
   for (const { name, level, count, repos } of sorted) {
+    const docs = CATEGORIES.find((category) => category.name === name)?.docs;
+    const links = (docs ?? []).map((url, i) => ` [${i + 1}](${url})`).join(',');
     console.log(
-      `| ${name} | ${level} | ${count} | ` +
+      `| ${name}${links} | ${level} | ${count} | ` +
         `${repos.size} | ${percent(repos.size, allRepos.size)} |`,
     );
   }
