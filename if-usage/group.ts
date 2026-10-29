@@ -22,10 +22,15 @@ type ScanRow = {
   content: string;
 };
 
-type Row = {
-  repo: Did;
+type If = {
   level: 'job' | 'step';
   expression: string;
+};
+
+type WorkflowRow = {
+  repo: Did;
+  path: string;
+  ifs: If[];
 };
 
 function main(filepath: string) {
@@ -34,7 +39,7 @@ function main(filepath: string) {
   const rows = data.toString().split('\n');
   let unparseableYaml = 0;
   let invalidWorkflows = 0;
-  const ifValues: Row[] = [];
+  const workflows: WorkflowRow[] = [];
 
   for (const r of rows) {
     if (r === '') continue;
@@ -53,26 +58,25 @@ function main(filepath: string) {
       continue;
     }
 
+    const ifs: If[] = [];
     for (const [, value] of Object.entries(result.output.jobs)) {
       if (value.if !== undefined) {
-        ifValues.push({
-          repo: parsedRow.repo,
-          level: 'job',
-          expression: String(value.if),
-        });
+        ifs.push({ level: 'job', expression: String(value.if) });
       }
 
       if (value.steps) {
         for (const step of value.steps) {
           if (step.if !== undefined)
-            ifValues.push({
-              repo: parsedRow.repo,
-              level: 'step',
-              expression: String(step.if),
-            });
+            ifs.push({ level: 'step', expression: String(step.if) });
         }
       }
     }
+
+    workflows.push({
+      repo: parsedRow.repo,
+      path: parsedRow.path,
+      ifs,
+    });
   }
 
   console.log('Done identifying if-statmements');
@@ -80,8 +84,8 @@ function main(filepath: string) {
   console.log(`${invalidWorkflows} workflows weren't correct workflow syntax`);
 
   writeFileSync(
-    'if-usage/ifs.jsonl',
-    ifValues.map((el) => JSON.stringify(el) + '\n').join(''),
+    'if-usage/workflows.jsonl',
+    workflows.map((el) => JSON.stringify(el) + '\n').join(''),
   );
 }
 
