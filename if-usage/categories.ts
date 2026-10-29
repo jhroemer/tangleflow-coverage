@@ -232,12 +232,17 @@ function main(filepath: string) {
     [...entries].sort(([, a], [, b]) => b - a);
   const codeCell = (text: string) => `\`${text.replaceAll('|', '\\|')}\``;
 
+  console.log('## overview\n');
+  console.log('| | count |');
+  console.log('| --- | --- |');
+  console.log(`| repos with workflows | ${allRepos.size} |`);
   console.log(
-    `${allRepos.size} repos with workflows, ${reposWithIfs.size} of them ` +
-      `(${percent(reposWithIfs.size, allRepos.size)}) with at least one if. ` +
-      `${parsed} ifs, ${unparseable} unparseable. ` +
-      `An if can be in several categories, so percentages add up to more than 100%.\n`,
+    `| repos with at least one if | ${reposWithIfs.size} ` +
+      `(${percent(reposWithIfs.size, allRepos.size)}) |`,
   );
+  console.log(`| ifs | ${parsed} |`);
+  console.log(`| unparseable ifs | ${unparseable} |\n`);
+  console.log('## categories\n');
   console.log('| category | level | ifs | repos | % of repos |');
   console.log('| --- | --- | --- | --- | --- |');
   const categoryTotals = new Map<string, number>();
